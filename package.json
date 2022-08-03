@@ -1,0 +1,23 @@
+{
+  "name": "rpp36-david-overview",
+  "version": "1.0.0",
+  "description": "SDC project for overview",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rpp36-sdc-tcp/rpp36-david-overview.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rpp36-sdc-tcp/rpp36-david-overview/issues"
+  },
+  "homepage": "https://github.com/rpp36-sdc-tcp/rpp36-david-overview#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
+}
