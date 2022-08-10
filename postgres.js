@@ -1,11 +1,32 @@
-import postgres from 'postgres'
+var Pool = require('pg-pool')
 
-const sql = postgres('postgres://username:password@host:port/database', {
-  host                 : 'localhost',            // Postgres ip address[s] or domain name[s]
-  port                 : 5432,          // Postgres server port[s]
-  database             : 'sdc',            // Name of database to connect to
-  username             : 'root',            // Username of database user
-  password             : 'test123',            // Password of database user
+const config = {
+  user: 'root',
+  password: 'test123',
+  host: 'localhost',
+  port: 5432,
+  database: 'sdc'
+  // ssl: true
+};
+
+const pool = new Pool(config)
+
+pool.on('connect', (client) => {
+  console.log('Connected to DB')
 })
 
-export default sql
+pool.on('error', (err, client) => {
+  console.error('Error connecting to DB', err);
+});
+
+module.exports.query = (text, values) => {
+  console.log('query:', text, values)
+  return pool.query(text, values)
+}
+
+
+//.env
+//PGDATABASE=my_db
+// PGUSER=username
+// PGPASSWORD="my awesome password"
+// PGPORT=5432
