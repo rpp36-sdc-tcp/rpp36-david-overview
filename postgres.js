@@ -6,7 +6,6 @@ const config = {
   host: 'localhost',
   port: 5432,
   database: 'sdc'
-  // ssl: true
 };
 
 const pool = new Pool(config)
