@@ -11,7 +11,7 @@ const config = {
 const pool = new Pool(config)
 
 pool.on('connect', (client) => {
-  console.log('Connected to DB')
+  // console.log('Connected to DB')
 })
 
 pool.on('error', (err, client) => {
@@ -33,7 +33,7 @@ pool.on('error', (err, client) => {
 // }
 
 module.exports.query = (text, values) => {
-  console.log('query:', text, values)
+  // console.log('query:', text, values)
   return pool.query(text, values)
 }
 

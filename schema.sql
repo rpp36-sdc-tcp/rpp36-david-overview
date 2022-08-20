@@ -77,3 +77,7 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA reviews TO root ;
 GRANT ALL ON ALL TABLES IN SCHEMA reviews TO root ;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA reviews TO root ;
 GRANT ALL ON ALL FUNCTIONS IN SCHEMA reviews TO root ;
+
+
+\COPY reviews.tempreviews (id,product_id,rating,date,summary,body,recommend,reported,reviewer_name,reviewer_email,response,helpfulness)
+FROM '/Users/davidtruong/Desktop/Hack Reactor SE/rpp36-david-overview/data/temp/temp_reviews.csv' DELIMITER ',' CSV HEADER;

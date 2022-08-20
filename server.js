@@ -25,11 +25,13 @@ app.get("/reviews", async (req, res) => {
   var sort;
   if (req.query.page) {
     page = req.query.page;
+    page = Number(page);
   } else {
     page = 0;
   }
   if (req.query.count) {
     count = req.query.count;
+    count = Number(count);
   } else {
     count = 5;
   }
@@ -45,8 +47,9 @@ app.get("/reviews", async (req, res) => {
   if (reviews.length < index) {
     reviews = [];
   } else {
-    if (reviews.length >= index + count) {
-      reviews = reviews.slice(index, index + count + 1);
+    var end = index + count;
+    if (reviews.length > end) {
+      reviews = reviews.slice(index, (index + count));
     } else {
       reviews = reviews.slice(index, reviews.length);
     }
@@ -157,11 +160,13 @@ app.post("/reviews", async (req, res) => {
   var countPhoto = await psql.query(photoCountQuery);
   countPhoto = countPhoto.rows[0].count;
   countPhoto++;
-  for (var i = 0; i < photos.length; i++) {
-    var photoQuery = 'INSERT INTO reviews.photos VALUES ($1, $2, $3)';
-    var values = [countPhoto, countReview, photos[i]];
-    await psql.query(photoQuery, values);
-    countPhoto++;
+  if (photos) {
+    for (var i = 0; i < photos.length; i++) {
+      var photoQuery = 'INSERT INTO reviews.photos VALUES ($1, $2, $3)';
+      var values = [countPhoto, countReview, photos[i]];
+      await psql.query(photoQuery, values);
+      countPhoto++;
+    }
   }
 
   var characteristicsCountQuery = 'SELECT count(*) from reviews.characteristics';
@@ -209,8 +214,8 @@ app.put("/reviews/:review_id/report", async (req, res) => {
   res.status(204).send('Updated report status');
 })
 
-app.listen(port, () => {
-  console.log(`Listening on port ${port}`)
-})
+// app.listen(port, () => {
+//   console.log(`Listening on port ${port}`)
+// })
 
 module.exports = app;
