@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require("express")
 const app = express();
 const port = 3001;
@@ -12,6 +14,7 @@ app.get("/", (req, res) => {
 })
 
 app.get("/reviews", async (req, res) => {
+
   //get all reviews
   //page default 1
   //count default 5
@@ -137,7 +140,7 @@ app.post("/reviews", async (req, res) => {
   //photos array of text
   //characteristics obj keys and values { "14": 5, "15": 5 //...}
   //status 201 CREATED
-  var id = req.body['product_id'];
+  var id = req.body.product_id;
   var rating = req.body.rating;
   var summary = req.body.summary;
   var body = req.body.body;
@@ -146,41 +149,55 @@ app.post("/reviews", async (req, res) => {
   var email = req.body.email;
   var photos = req.body.photos;
   var characteristics = req.body.characteristics
+  if (typeof characteristics === 'string') {
+    characteristics = JSON.parse(characteristics)
+  }
   var date = Date.now();
 
-  var countQuery = 'SELECT count(*) FROM reviews.reviews';
-  var countReview = await psql.query(countQuery);
-  countReview = countReview.rows[0].count;
-  countReview++;
-  var query = 'INSERT INTO reviews.reviews VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)';
-  var values = [countReview, id, rating, date, summary, body, recommend, false, name, email, 'null', 0]
+  var query = 'INSERT INTO reviews.reviews(product_id, rating, date, summary, body, recommend, reported, reviewer_name, reviewer_email, response, helpfulness) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+  var values = [id, rating, date, summary, body, recommend, false, name, email, 'null', 0]
   await psql.query(query, values);
+  var countReview = await psql.query('select id FROM reviews.reviews ORDER BY id DESC LIMIT 1')
+  countReview = countReview.rows[0].id;
 
-  var photoCountQuery = 'SELECT count(*) FROM reviews.photos';
-  var countPhoto = await psql.query(photoCountQuery);
-  countPhoto = countPhoto.rows[0].count;
-  countPhoto++;
-  if (photos) {
+  // if (photos) {
+  //   for (var i = 0; i < photos.length; i++) {
+  //     var photoQuery = 'INSERT INTO reviews.photos(review_id, url) VALUES ($1, $2)';
+  //     var values = [countReview, photos[i]];
+  //     await psql.query(photoQuery, values);
+  //   }
+  // }
+
+  if (photos.length > 0) {
+    var photoQuery = 'INSERT INTO reviews.photos(review_id, url) VALUES ';
     for (var i = 0; i < photos.length; i++) {
-      var photoQuery = 'INSERT INTO reviews.photos VALUES ($1, $2, $3)';
-      var values = [countPhoto, countReview, photos[i]];
-      await psql.query(photoQuery, values);
-      countPhoto++;
+      var values = `(${countReview}, '${photos[i]}'), `;
+      photoQuery += values
     }
+    photoQuery = photoQuery.slice(0, -2)
+    await psql.query(photoQuery);
   }
 
-  var characteristicsCountQuery = 'SELECT count(*) from reviews.characteristics';
-  var countChar = await psql.query(characteristicsCountQuery);
-  countChar = countChar.rows[0].count;
-  countChar++;
-  charQuery = 'INSERT INTO reviews.characteristics VALUES ($1, $2, $3, $4, $5, $6)';
-  for (key in characteristics) {
-    charTableQuery = 'SELECT * FROM reviews.char WHERE id=$1';
-    var ref = await psql.query(charTableQuery, [key]);
-    ref = ref.rows[0];
-    var values = [countChar, key, countReview, characteristics[key], ref['product_id'], ref.name];
-    await psql.query(charQuery, values);
-    countChar++
+  // var charQuery = 'INSERT INTO reviews.characteristics(characteristic_id, review_id, value, product_id, name) VALUES ($1, $2, $3, $4, $5)';
+  // for (var key in characteristics) {
+  //   charTableQuery = 'SELECT * FROM reviews.char WHERE id=$1';
+  //   var ref = await psql.query(charTableQuery, [key]);
+  //   ref = ref.rows[0];
+  //   var values = [key, countReview, characteristics[key], ref['product_id'], ref.name];
+  //   await psql.query(charQuery, values);
+  // }
+
+  if (characteristics) {
+    var charQuery = 'INSERT INTO reviews.characteristics(characteristic_id, review_id, value, product_id, name) VALUES ';
+    for (var key in characteristics) {
+      charTableQuery = 'SELECT * FROM reviews.char WHERE id=$1';
+      var ref = await psql.query(charTableQuery, [key]);
+      ref = ref.rows[0];
+      var values = `(${key}, ${countReview}, ${characteristics[key]}, ${ref['product_id']}, '${ref.name}'), `;
+      charQuery += values
+    }
+    charQuery = charQuery.slice(0, -2)
+    await psql.query(charQuery);
   }
 
   res.status(201).send('Created review');
@@ -194,11 +211,11 @@ app.put("/reviews/:review_id/helpful", async (req, res) => {
   var help = await psql.query(query, [id]);
   help = help.rows[0].helpfulness;
   help++;
-  var query = 'UPDATE reviews.reviews SET helpfulness =$1 WHERE id =$2';
-  await psql.query(query, [help, id]);
-  var test = 'SELECT helpfulness FROM reviews.reviews WHERE id=$1';
-  var rest = await psql.query(test, [id]);
-  rest = rest.rows[0].helpfulness;
+  var updateQuery = 'UPDATE reviews.reviews SET helpfulness =$1 WHERE id =$2';
+  await psql.query(updateQuery, [help, id]);
+  // var test = 'SELECT helpfulness FROM reviews.reviews WHERE id=$1';
+  // var rest = await psql.query(test, [id]);
+  // rest = rest.rows[0].helpfulness;
   res.status(204).send('Updated helpful');
 })
 
@@ -208,14 +225,14 @@ app.put("/reviews/:review_id/report", async (req, res) => {
   var id = req.params['review_id'];
   var query = 'UPDATE reviews.reviews SET reported =$1 WHERE id =$2';
   await psql.query(query, [true, id]);
-  var test = 'SELECT * FROM reviews.reviews WHERE id=$1';
-  var rest = await psql.query(test, [id]);
-  rest = rest.rows;
+  // var test = 'SELECT * FROM reviews.reviews WHERE id=$1';
+  // var rest = await psql.query(test, [id]);
+  // rest = rest.rows;
   res.status(204).send('Updated report status');
 })
 
-// app.listen(port, () => {
-//   console.log(`Listening on port ${port}`)
-// })
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`)
+})
 
 module.exports = app;
